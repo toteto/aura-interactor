@@ -1,12 +1,13 @@
 package netcetera.com.aura;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -15,9 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -31,25 +34,28 @@ import javax.tools.Diagnostic;
  */
 public class AuraOutputProcessor extends AbstractProcessor {
   private Messager messager;
+  private Filer filer;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
     messager = processingEnvironment.getMessager();
+    filer = processingEnvironment.getFiler();
   }
 
   @Override
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
+    // Filter
     Set<? extends Element> allOutputs = roundEnvironment.getElementsAnnotatedWith(AuraOutput.class);
     Map<TypeElement, Set<ExecutableElement>> auraTargets = filterTargets(allOutputs);
     if (auraTargets.isEmpty()) {
-      return true;
+      return false;
     }
 
+    // Generate classes
     for (TypeElement auraInterface : auraTargets.keySet()) {
       String genName = AuraOutput.class.getSimpleName() + "_" + auraInterface.getSimpleName();
       ClassName interfaceClass = ClassName.get(auraInterface);
-
 
       TypeSpec.Builder classBuilder = TypeSpec.classBuilder(genName)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -63,9 +69,17 @@ public class AuraOutputProcessor extends AbstractProcessor {
           classBuilder.addMethod(createAuraMethod(((ExecutableElement) element)));
         }
       }
+
+      try {
+        TypeSpec generatedClass = classBuilder.build();
+        JavaFile.builder(interfaceClass.packageName(), generatedClass).build().writeTo(filer);
+      } catch (IOException e) {
+        messager.printMessage(Diagnostic.Kind.ERROR,
+          "Failed to write generated class [" + genName + "]." + e.getMessage());
+      }
     }
 
-    return false;
+    return true;
   }
 
   private Map<TypeElement, Set<ExecutableElement>> filterTargets(Set<? extends Element> allOutputs) {
@@ -81,9 +95,7 @@ public class AuraOutputProcessor extends AbstractProcessor {
       List<? extends Element> enclosedElements = auraInterface.getEnclosedElements();
       Set<ExecutableElement> auraMethods = new LinkedHashSet<>();
       for (Element enclosedElement : enclosedElements) {
-        boolean isMethod = enclosedElement.getKind() == ElementKind.METHOD;
-        boolean isAuraOff = enclosedElement.getAnnotation(AuraOff.class) != null;
-        if (isMethod && !isAuraOff) {
+        if (enclosedElement.getKind() == ElementKind.METHOD) {
           auraMethods.add(((ExecutableElement) enclosedElement));
         }
       }
@@ -103,32 +115,35 @@ public class AuraOutputProcessor extends AbstractProcessor {
   }
 
   private MethodSpec createAuraMethod(ExecutableElement method) {
-    final String methodName = method.getSimpleName().toString();
-    MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(methodName)
+    MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.getSimpleName().toString())
+      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
       .addAnnotation(Override.class);
 
     for (VariableElement variableElement : method.getParameters()) {
       methodBuilder.addParameter(ParameterSpec.get(variableElement));
     }
 
-    final String outputInvocationTemplate;
-    if(method.getAnnotation(AuraOff.class) == null) {
-      outputInvocationTemplate = "output.$L($L)";
+
+    if (method.getAnnotation(AuraOff.class) == null) {
+      methodBuilder.addStatement("$L", generateAuraOutputInvocation(method));
     } else {
-      outputInvocationTemplate = "$L($L)";
+      methodBuilder.addStatement("output.$L($L)", method.getSimpleName().toString(), generateParamsForOutputInvocation(method));
     }
 
-    methodBuilder.addStatement(
-      CodeBlock.builder()
-        .add("executor.runForeground(new $T() {", Runnable.class)
-        .add("$T", Override.class)
-        .add("public void run() {")
-        .addStatement(outputInvocationTemplate, methodName, generateParamsForOutputInvocation(method))
-        .add("}") // Runnable.run close
-        .add("})") // Runnable close, runForeground close
-        .build());
+    return methodBuilder.build();
+  }
 
-     return methodBuilder.build();
+  private TypeSpec generateAuraOutputInvocation(ExecutableElement method) {
+
+    return TypeSpec.anonymousClassBuilder("")
+      .addSuperinterface(Runnable.class)
+      .addMethod(MethodSpec.methodBuilder("run")
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(TypeName.VOID)
+        .addStatement("output.$L($L)", method.getSimpleName().toString(), generateParamsForOutputInvocation(method))
+        .build())
+      .build();
   }
 
   private String generateParamsForOutputInvocation(ExecutableElement method) {
@@ -150,5 +165,10 @@ public class AuraOutputProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     return Collections.singleton(AuraOutput.class.getCanonicalName());
+  }
+
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.latestSupported();
   }
 }
