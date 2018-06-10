@@ -120,12 +120,12 @@ public class AuraOutputProcessor extends AbstractProcessor {
       .addAnnotation(Override.class);
 
     for (VariableElement variableElement : method.getParameters()) {
-      methodBuilder.addParameter(ParameterSpec.get(variableElement));
+      methodBuilder.addParameter(ParameterSpec.get(variableElement).toBuilder().addModifiers(Modifier.FINAL).build());
     }
 
 
     if (method.getAnnotation(AuraOff.class) == null) {
-      methodBuilder.addStatement("$L", generateAuraOutputInvocation(method));
+      methodBuilder.addStatement("executor.runForeground($L)", generateAuraOutputInvocation(method));
     } else {
       methodBuilder.addStatement("output.$L($L)", method.getSimpleName().toString(), generateParamsForOutputInvocation(method));
     }
