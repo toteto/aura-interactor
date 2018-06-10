@@ -4,11 +4,11 @@ import netcetera.com.aura.AuraOff;
 import netcetera.com.aura.AuraOutput;
 
 @AuraOutput
-public interface MainOutput {
+public interface MyOutput {
 
-  void showMessage(String message);
+  void myMethod(String message);
 
   @AuraOff
-  void noAuraMethod(String p1, String p2);
+  void backgroundMyMethod(String p1, String p2);
 
 }

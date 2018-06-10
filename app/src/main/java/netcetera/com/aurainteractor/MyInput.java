@@ -1,10 +1,10 @@
 package netcetera.com.aurainteractor;
 
-public class MainInput {
+public class MyInput {
 
   private final String message;
 
-  public MainInput(String message) {
+  public MyInput(String message) {
     this.message = message;
   }
 
