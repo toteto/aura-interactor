@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/toteto/aura-interactor.svg?branch=master)](https://travis-ci.org/toteto/aura-interactor)
-![Bintray](https://img.shields.io/bintray/v/toteto/maven/Aura-Interactor.svg)
+[![Bintray](https://img.shields.io/bintray/v/toteto/maven/Aura-Interactor.svg)](https://bintray.com/toteto/maven/Aura-Interactor)
 # aura-interactor
 Inspired (read: scared) by the idea of the repetative task of implementing interactor (Use Case in Clean Architecture) wappers for the purpuse of background execution, I wanted to learn a bit more about code generation and annotation processing in Java so i set out to do this project.
 
@@ -49,3 +49,19 @@ interactor.interact1(input, output);
 
 
 Look at the full sample in 'app' module.
+
+## Download
+Add to your project gradle.
+```groovy
+repositories {
+    maven { url "http://dl.bintray.com/toteto/maven" }
+}
+```
+
+Add to your module gradle.
+```groovy
+dependencies {
+  implementation 'com.antonioivanovski:aura-annotation:1.0.0-alpha.1'
+  annotationProcessor 'com.antonioivanovski:aura-processor:1.0.0-alpha.1'
+}
+```
