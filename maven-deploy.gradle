@@ -7,12 +7,12 @@ ext {
   libraryName = 'AuraIntaractor'
   artifact = project.name
 
-  libraryDescription = 'Boilerplate code generator for background execution of interactor'
+  libraryDescription = 'Initial alpha release for this library. It works, but needs testing and code cleanup.'
 
   siteUrl = 'https://github.com/toteto/aura-interactor'
   gitUrl = 'https://github.com/toteto/aura-interactor.git'
 
-  libraryVersion = '0.0.1'
+  libraryVersion = '1.0.0-alpha.1'
 
   developerId = 'toteto'
   developerName = 'Antonio Ivanovski'
@@ -25,5 +25,7 @@ ext {
 }
 
 //These two remote files contain Bintray configuration as described above.
-apply from: 'https://raw.githubusercontent.com/quangctkm9207/template-files/master/android/gradle/install.gradle'
-apply from: 'https://raw.githubusercontent.com/quangctkm9207/template-files/master/android/gradle/bintray.gradle'
+if (project.rootProject.file('local.properties').exists()) {
+  apply from: 'https://raw.githubusercontent.com/quangctkm9207/template-files/master/android/gradle/install.gradle'
+  apply from: 'https://raw.githubusercontent.com/quangctkm9207/template-files/master/android/gradle/bintray.gradle'
+}
