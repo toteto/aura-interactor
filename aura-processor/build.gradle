@@ -1,6 +1,7 @@
 import org.gradle.internal.jvm.Jvm
 
 apply plugin: 'java-library'
+apply from: '../maven-deploy.gradle'
 
 dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])

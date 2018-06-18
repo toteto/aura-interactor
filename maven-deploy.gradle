@@ -1,0 +1,29 @@
+ext {
+  //For bintray and jcenter distribution
+  bintrayRepo = 'maven'
+  bintrayName = 'Aura-Interactor'
+
+  publishedGroupId = 'com.antonioivanovski'
+  libraryName = 'AuraIntaractor'
+  artifact = project.name
+
+  libraryDescription = 'Boilerplate code generator for background execution of interactor'
+
+  siteUrl = 'https://github.com/toteto/aura-interactor'
+  gitUrl = 'https://github.com/toteto/aura-interactor.git'
+
+  libraryVersion = '0.0.1'
+
+  developerId = 'toteto'
+  developerName = 'Antonio Ivanovski'
+  developerEmail = 'antonioivanovski@gmail.com'
+  organization = 'toteto'
+  licenseName = 'The Apache Software License, Version 2.0'  //Example for license
+  licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+  allLicenses = ["Apache-2.0"]
+
+}
+
+//These two remote files contain Bintray configuration as described above.
+apply from: 'https://raw.githubusercontent.com/quangctkm9207/template-files/master/android/gradle/install.gradle'
+apply from: 'https://raw.githubusercontent.com/quangctkm9207/template-files/master/android/gradle/bintray.gradle'
