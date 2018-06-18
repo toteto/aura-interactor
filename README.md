@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/toteto/aura-interactor.svg?branch=master)](https://travis-ci.org/toteto/aura-interactor)
 # aura-interactor
 Inspired (read: scared) by the idea of the repetative task of implementing interactor (Use Case in Clean Architecture) wappers for the purpuse of background execution, I wanted to learn a bit more about code generation and annotation processing in Java so i set out to do this project.
 
