@@ -1,6 +1,6 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
-import netcetera.com.aura.AuraExecutor;
+import com.antonioivanovski.aura.AuraExecutor;
 
 public final class DependencyProvider {
   private static AuraExecutor auraExecutorInstance;

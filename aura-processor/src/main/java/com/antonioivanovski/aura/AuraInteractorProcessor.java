@@ -1,4 +1,4 @@
-package netcetera.com.aura;
+package com.antonioivanovski.aura;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -9,10 +9,8 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -27,40 +25,47 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
-/**
- * Processor responsible for generating Aura output classes.
- */
-public class AuraOutputProcessor extends AbstractProcessor {
+public class AuraInteractorProcessor extends AbstractProcessor {
+
+  private Types typeUtils;
+  private Elements elementUtils;
   private Messager messager;
   private Filer filer;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
+    typeUtils = processingEnvironment.getTypeUtils();
+    elementUtils = processingEnvironment.getElementUtils();
     messager = processingEnvironment.getMessager();
     filer = processingEnvironment.getFiler();
   }
 
   @Override
   public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-    // Filter
-    Set<? extends Element> allOutputs = roundEnvironment.getElementsAnnotatedWith(AuraOutput.class);
-    Map<TypeElement, Set<ExecutableElement>> auraTargets = filterTargets(allOutputs);
-    if (auraTargets.isEmpty()) {
-      return false;
+    Set<? extends Element> allTargets = roundEnvironment.getElementsAnnotatedWith(AuraInteractor.class);
+    Set<TypeElement> auraTargets = new LinkedHashSet<>();
+    for (Element element : allTargets) {
+      if (element.getKind() != ElementKind.INTERFACE) {
+        messager.printMessage(Diagnostic.Kind.NOTE,
+          AuraInteractor.class.getSimpleName() + " can only be used on interfaces. Will not generate for [" + element
+            .getSimpleName() + "]");
+      }
+      auraTargets.add(((TypeElement) element));
     }
 
-    // Generate classes
-    for (TypeElement auraInterface : auraTargets.keySet()) {
-      String genName = AuraOutput.class.getSimpleName() + "_" + auraInterface.getSimpleName();
+    for (TypeElement auraInterface : auraTargets) {
+      String genName = AuraInteractor.class.getSimpleName() + "_" + auraInterface.getSimpleName();
       ClassName interfaceClass = ClassName.get(auraInterface);
 
       TypeSpec.Builder classBuilder = TypeSpec.classBuilder(genName)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .addSuperinterface(interfaceClass)
-        .addField(TypeName.get(auraInterface.asType()), "output", Modifier.PRIVATE, Modifier.FINAL)
+        .addField(TypeName.get(auraInterface.asType()), "interactor", Modifier.PRIVATE, Modifier.FINAL)
         .addField(AuraExecutor.class, "executor", Modifier.PRIVATE, Modifier.FINAL)
         .addMethod(createConstructor(auraInterface));
 
@@ -71,45 +76,20 @@ public class AuraOutputProcessor extends AbstractProcessor {
       }
 
       try {
-        TypeSpec generatedClass = classBuilder.build();
-        JavaFile.builder(interfaceClass.packageName(), generatedClass).build().writeTo(filer);
+        JavaFile.builder(interfaceClass.packageName(), classBuilder.build()).build().writeTo(filer);
       } catch (IOException e) {
         messager.printMessage(Diagnostic.Kind.ERROR,
           "Failed to write generated class [" + genName + "]." + e.getMessage());
       }
     }
-
     return true;
-  }
-
-  private Map<TypeElement, Set<ExecutableElement>> filterTargets(Set<? extends Element> allOutputs) {
-    Map<TypeElement, Set<ExecutableElement>> auraTargets = new LinkedHashMap<>();
-    for (Element element : allOutputs) {
-      if (element.getKind() != ElementKind.INTERFACE) {
-        messager.printMessage(Diagnostic.Kind.ERROR, "AuraOutput can only be applied to interfaces.");
-        return Collections.emptyMap();
-      }
-
-      TypeElement auraInterface = (TypeElement) element;
-
-      List<? extends Element> enclosedElements = auraInterface.getEnclosedElements();
-      Set<ExecutableElement> auraMethods = new LinkedHashSet<>();
-      for (Element enclosedElement : enclosedElements) {
-        if (enclosedElement.getKind() == ElementKind.METHOD) {
-          auraMethods.add(((ExecutableElement) enclosedElement));
-        }
-      }
-
-      auraTargets.put(auraInterface, auraMethods);
-    }
-    return auraTargets;
   }
 
   private MethodSpec createConstructor(TypeElement auraInterface) {
     return MethodSpec.constructorBuilder()
-      .addParameter(TypeName.get(auraInterface.asType()), "output")
+      .addParameter(TypeName.get(auraInterface.asType()), "interactor")
       .addParameter(AuraExecutor.class, "executor")
-      .addStatement("this.$N = $N", "output", "output")
+      .addStatement("this.$N = $N", "interactor", "interactor")
       .addStatement("this.$N = $N", "executor", "executor")
       .build();
   }
@@ -123,17 +103,23 @@ public class AuraOutputProcessor extends AbstractProcessor {
       methodBuilder.addParameter(ParameterSpec.get(variableElement).toBuilder().addModifiers(Modifier.FINAL).build());
     }
 
-
-    if (method.getAnnotation(AuraOff.class) == null) {
-      methodBuilder.addStatement("executor.runForeground($L)", generateAuraOutputInvocation(method));
-    } else {
-      methodBuilder.addStatement("output.$L($L)", method.getSimpleName().toString(), generateParamsForOutputInvocation(method));
-    }
+    methodBuilder.addStatement("executor.runBackground($L)", generateInteractorInvocationStatement(method));
 
     return methodBuilder.build();
   }
 
-  private TypeSpec generateAuraOutputInvocation(ExecutableElement method) {
+  private TypeSpec generateInteractorInvocationStatement(ExecutableElement method) {
+    List<? extends VariableElement> parameters = method.getParameters();
+    VariableElement outputParam = parameters.get(parameters.size() - 1);
+    Element outputElement = typeUtils.asElement(outputParam.asType());
+    String outputPackage = elementUtils.getPackageOf(outputElement).getQualifiedName().toString();
+    ClassName outputClass = ClassName.get(outputPackage,
+      AuraOutput.class.getSimpleName() + "_" + outputElement.getSimpleName());
+
+
+    String paramsForOutputInvocation = generateParamsForOutputInvocation(method).replace(outputParam.getSimpleName(),
+      "auraOutput");
+    messager.printMessage(Diagnostic.Kind.NOTE, paramsForOutputInvocation);
 
     return TypeSpec.anonymousClassBuilder("")
       .addSuperinterface(Runnable.class)
@@ -141,7 +127,8 @@ public class AuraOutputProcessor extends AbstractProcessor {
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(TypeName.VOID)
-        .addStatement("output.$L($L)", method.getSimpleName().toString(), generateParamsForOutputInvocation(method))
+        .addStatement("final $T auraOutput = new $T($N, executor)", outputClass, outputClass, outputParam.getSimpleName())
+        .addStatement("interactor.$L($L)", method.getSimpleName().toString(), paramsForOutputInvocation)
         .build())
       .build();
   }
@@ -164,11 +151,11 @@ public class AuraOutputProcessor extends AbstractProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return Collections.singleton(AuraOutput.class.getCanonicalName());
+    return Collections.singleton(AuraInteractor.class.getCanonicalName());
   }
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
-    return SourceVersion.latestSupported();
+    return super.getSupportedSourceVersion();
   }
 }

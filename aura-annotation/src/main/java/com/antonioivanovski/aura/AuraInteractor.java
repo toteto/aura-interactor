@@ -1,4 +1,4 @@
-package netcetera.com.aura;
+package com.antonioivanovski.aura;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,4 +1,4 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
 public class MyInteractorImpl implements MyInteractor {
 

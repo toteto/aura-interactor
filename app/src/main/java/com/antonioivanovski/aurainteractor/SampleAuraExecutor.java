@@ -1,4 +1,4 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -6,7 +6,7 @@ import android.os.Looper;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import netcetera.com.aura.AuraExecutor;
+import com.antonioivanovski.aura.AuraExecutor;
 
 public class SampleAuraExecutor implements AuraExecutor {
 

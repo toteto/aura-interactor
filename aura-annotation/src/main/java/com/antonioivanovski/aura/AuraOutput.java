@@ -1,4 +1,4 @@
-package netcetera.com.aura;
+package com.antonioivanovski.aura;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.METHOD)
-public @interface AuraOff {
+@Target(ElementType.TYPE)
+public @interface AuraOutput {
 
 }

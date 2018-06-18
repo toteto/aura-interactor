@@ -1,7 +1,7 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
-import netcetera.com.aura.AuraOff;
-import netcetera.com.aura.AuraOutput;
+import com.antonioivanovski.aura.AuraOff;
+import com.antonioivanovski.aura.AuraOutput;
 
 @AuraOutput
 public interface MyOutput {

@@ -1,4 +1,4 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
 import android.app.Activity;
 import android.os.Bundle;

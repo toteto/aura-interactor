@@ -1,6 +1,6 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
-import netcetera.com.aura.AuraInteractor;
+import com.antonioivanovski.aura.AuraInteractor;
 
 @AuraInteractor
 public interface MyInteractor {

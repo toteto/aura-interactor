@@ -1,4 +1,4 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

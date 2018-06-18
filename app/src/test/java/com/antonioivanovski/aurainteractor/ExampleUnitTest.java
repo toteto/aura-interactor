@@ -1,4 +1,4 @@
-package netcetera.com.aurainteractor;
+package com.antonioivanovski.aurainteractor;
 
 import org.junit.Test;
 

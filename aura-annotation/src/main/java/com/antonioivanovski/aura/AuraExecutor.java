@@ -1,4 +1,4 @@
-package netcetera.com.aura;
+package com.antonioivanovski.aura;
 
 public interface AuraExecutor {
 
