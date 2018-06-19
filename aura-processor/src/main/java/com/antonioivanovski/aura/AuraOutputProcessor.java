@@ -30,7 +30,7 @@ import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic;
 
 /**
- * Processor responsible for generating Aura output classes.
+ * Annotation processor for processing {@link AuraOutput}.
  */
 public class AuraOutputProcessor extends AbstractProcessor {
   private Messager messager;

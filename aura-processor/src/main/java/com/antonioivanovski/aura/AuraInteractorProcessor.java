@@ -29,6 +29,9 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
+/**
+ * Annotation processor for processing {@link AuraInteractor}.
+ */
 public class AuraInteractorProcessor extends AbstractProcessor {
 
   private Types typeUtils;
