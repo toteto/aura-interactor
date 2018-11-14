@@ -51,17 +51,4 @@ interactor.interact1(input, output);
 Look at the full sample in 'app' module.
 
 ## Download
-Add to your project gradle.
-```groovy
-repositories {
-    maven { url "http://dl.bintray.com/toteto/maven" }
-}
-```
-
-Add to your module gradle.
-```groovy
-dependencies {
-  implementation 'com.antonioivanovski:aura-annotation:1.0.0-alpha.1'
-  annotationProcessor 'com.antonioivanovski:aura-processor:1.0.0-alpha.1'
-}
-```
+No stable release available yet.
