@@ -7,27 +7,100 @@ Inspired (read: scared) by the idea of the repetative task of implementing inter
 Annotate your interactor with `@AuraInteractor`
 ```java
 @AuraInteractor
-public interface MyInteractor {
+public interface LoginInteractor {
 
-  void interact1(MyInput input, MyOutput output);
+  void login(LoginCredentials input, LoginOutput loginOutput);
 
-  void anyInteractName(AnyAnnotatedAuraOutput output);
-  
-  // void interact3(MyOutput output);
-  // ...
+  void guestLogin(LoginOutput loginOutput);
+}
+```
+
+This will generate:
+```java
+public final class AuraInteractor_LoginInteractor implements LoginInteractor {
+  private final LoginInteractor interactor;
+
+  private final AuraExecutor executor;
+
+  AuraInteractor_LoginInteractor(LoginInteractor interactor, AuraExecutor executor) {
+    this.interactor = interactor;
+    this.executor = executor;
+  }
+
+  @Override
+  public final void login(final LoginCredentials input, final LoginOutput loginOutput) {
+    executor.runBackground(new Runnable() {
+      @Override
+      public void run() {
+        final AuraOutput_LoginOutput auraOutput = new AuraOutput_LoginOutput(loginOutput, executor);
+        interactor.login(input, auraOutput);
+      }
+    });
+  }
+
+  @Override
+  public final void guestLogin(final LoginOutput loginOutput) {
+    executor.runBackground(new Runnable() {
+      @Override
+      public void run() {
+        final AuraOutput_LoginOutput auraOutput = new AuraOutput_LoginOutput(loginOutput, executor);
+        interactor.guestLogin(auraOutput);
+      }
+    });
+  }
 }
 ```
 
 Annotate the output(s) of the interactor with `@AuraOutput`. To invoke output methods on background annotete them with `@AuraOff`
 ```java
 @AuraOutput
-public interface MyOutput {
+public interface LoginOutput {
 
-  void myMethod(String message);
+  void successfulLogin(String message);
+
+  void failedLogin(Exception e);
 
   @AuraOff
-  void backgroundMyMethod(String message);
+  void loginProgress(double progress);
+}
+```
 
+This will generate:
+```java
+public final class AuraOutput_LoginOutput implements LoginOutput {
+  private final LoginOutput output;
+
+  private final AuraExecutor executor;
+
+  AuraOutput_LoginOutput(LoginOutput output, AuraExecutor executor) {
+    this.output = output;
+    this.executor = executor;
+  }
+
+  @Override
+  public final void successfulLogin(final String message) {
+    executor.runForeground(new Runnable() {
+      @Override
+      public void run() {
+        output.successfulLogin(message);
+      }
+    });
+  }
+
+  @Override
+  public final void failedLogin(final Exception e) {
+    executor.runForeground(new Runnable() {
+      @Override
+      public void run() {
+        output.failedLogin(e);
+      }
+    });
+  }
+
+  @Override
+  public final void loginProgress(final double progress) {
+    output.loginProgress(progress);
+  }
 }
 ```
 
@@ -37,16 +110,15 @@ private static AuraExecutor provideAuraExecutor() {
   // return your executor however you defined it
 }
 
-public static MyInteractor provideMyInteractor() {
-  MyInteractor myInteractor = new MyInteractorImpl(); // your original interactor
-  return new AuraInteractor_MyInteractor(myInteractor, provideAuraExecutor());
+public static LoginInteractor provideLoginInteractor() {
+  LoginInteractor loginInteractor = new LoginInteractorImpl();
+  return new AuraInteractor_LoginInteractor(loginInteractor, provideAuraExecutor());
 }
 ```
 ```java
-MyInteractor interactor = Dependencies.provideMyInteractor();
-interactor.interact1(input, output);
+loginInteractor = DependencyProvider.provideLoginInteractor();
+loginInteractor.login(loginCredentials, loginOuput);
 ```
-
 
 Look at the full sample in 'app' module.
 
