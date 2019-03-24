@@ -16,9 +16,9 @@ public final class DependencyProvider {
     return auraExecutorInstance;
   }
 
-  public static MyInteractor provideMainInteractor() {
-    MyInteractor myInteractor = new MyInteractorImpl();
-    return new AuraInteractor_MyInteractor(myInteractor, provideAuraExecutor());
+  public static LoginInteractor provideLoginInteractor() {
+    LoginInteractor loginInteractor = new LoginInteractorImpl();
+    return new AuraInteractor_LoginInteractor(loginInteractor, provideAuraExecutor());
   }
 
 }
